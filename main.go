@@ -13,7 +13,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cloudbase/garm-provider-common/execution"
+	commonExecution "github.com/cloudbase/garm-provider-common/execution/common"
+	execution "github.com/cloudbase/garm-provider-common/execution/v0.1.0"
 
 	"github.com/cloudbase/garm-provider-lxd/provider"
 )
@@ -23,21 +24,7 @@ var signals = []os.Signal{
 	syscall.SIGTERM,
 }
 
-var (
-	// Version is the version of the application
-	Version = "v0.0.0-unknown"
-)
-
 func main() {
-	// This is an unofficial command. It will be added into future versions of the
-	// external provider interface. For now we manually hardcode it here. This is not
-	// used by GARM itself. It is informative for the user to be able to check the version
-	// of the provider.
-	garmCommand := os.Getenv("GARM_COMMAND")
-	if garmCommand == "GetVersion" {
-		fmt.Println(Version)
-		os.Exit(0)
-	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), signals...)
 	defer stop()
@@ -47,7 +34,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	prov, err := provider.NewLXDProvider(executionEnv.ProviderConfigFile, executionEnv.ControllerID)
+	prov, err := provider.NewLXDProvider(executionEnv.ProviderConfigFile, executionEnv.ControllerID, executionEnv.InterfaceVersion)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +42,7 @@ func main() {
 	result, err := execution.Run(ctx, prov, executionEnv)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to run command: %s", err)
-		os.Exit(execution.ResolveErrorToExitCode(err))
+		os.Exit(commonExecution.ResolveErrorToExitCode(err))
 	}
 	if len(result) > 0 {
 		fmt.Fprint(os.Stdout, result)

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	runnerErrors "github.com/cloudbase/garm-provider-common/errors"
-	"github.com/cloudbase/garm-provider-common/execution"
+	execution "github.com/cloudbase/garm-provider-common/execution/v0.1.0"
 	"github.com/cloudbase/garm-provider-lxd/config"
 
 	lxd "github.com/canonical/lxd/client"
@@ -71,7 +71,7 @@ var (
 	DefaultGetCloudconfig GetCloudConfigFunc = cloudconfig.GetCloudConfig
 )
 
-func NewLXDProvider(configFile, controllerID string) (execution.ExternalProvider, error) {
+func NewLXDProvider(configFile, controllerID string, interfaceVersion string) (execution.ExternalProvider, error) {
 	cfg, err := config.NewConfig(configFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing config")
@@ -85,8 +85,9 @@ func NewLXDProvider(configFile, controllerID string) (execution.ExternalProvider
 	}
 
 	provider := &LXD{
-		cfg:          cfg,
-		controllerID: controllerID,
+		cfg:              cfg,
+		controllerID:     controllerID,
+		interfaceVersion: interfaceVersion,
 		imageManager: &image{
 			remotes: cfg.ImageRemotes,
 		},
@@ -117,6 +118,8 @@ type LXD struct {
 	imageManager *image
 	// controllerID is the ID of this controller
 	controllerID string
+	// Interface version of the provider
+	interfaceVersion string
 
 	mux sync.Mutex
 }
@@ -482,4 +485,9 @@ func (l *LXD) Stop(ctx context.Context, instance string, force bool) error {
 // Start boots up an instance.
 func (l *LXD) Start(ctx context.Context, instance string) error {
 	return l.setState(ctx, instance, "start", false)
+}
+
+// GetVersion returns the interface version of the provider.
+func (l *LXD) GetVersion(ctx context.Context) string {
+	return l.interfaceVersion
 }
