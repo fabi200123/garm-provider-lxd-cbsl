@@ -26,7 +26,7 @@ import (
 
 var _ execution.ExternalProvider = &LXD{}
 
-var version = "v0.1.0"
+var version = "v0.0.0-unknown"
 
 const (
 	// We look for this key in the config of the instances to determine if they are
@@ -488,5 +488,6 @@ func (l *LXD) Start(ctx context.Context, instance string) error {
 
 // GetVersion returns the interface version of the provider.
 func (l *LXD) GetVersion(ctx context.Context) string {
+	fmt.Println(version)
 	return version
 }
